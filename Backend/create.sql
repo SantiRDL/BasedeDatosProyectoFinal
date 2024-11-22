@@ -1,5 +1,6 @@
-CREATE DATABASE IF NOT EXISTS invierno;
-USE invierno;
+CREATE DATABASE escuela_deportes_nieve;
+
+USE escuela_deportes_nieve;
 
 CREATE TABLE login (
     correo VARCHAR(255) PRIMARY KEY,
@@ -26,17 +27,14 @@ CREATE TABLE instructores (
     apellido VARCHAR(255) NOT NULL
 );
 
-CREATE TABLE turnos (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    hora_inicio TIME NOT NULL,
-    hora_fin TIME NOT NULL
-);
 
 CREATE TABLE alumnos (
     ci VARCHAR(20) PRIMARY KEY,
     nombre VARCHAR(255) NOT NULL,
     apellido VARCHAR(255) NOT NULL,
-    fecha_nacimiento DATE NOT NULL
+    fecha_nacimiento DATE NOT NULL,
+    telefono VARCHAR(20),
+    correo VARCHAR(255)
 );
 
 CREATE TABLE clase (
@@ -45,6 +43,8 @@ CREATE TABLE clase (
     id_actividad INT,
     id_turno INT,
     dictada BOOLEAN NOT NULL,
+    turno ENUM('De 9:00 a 11:00', 'De 12:00 a 14:00', 'De 16:00 a 18:00') NOT NULL,
+    tipo_actividad ENUM('grupal', 'individual') NOT NULL,
     FOREIGN KEY (ci_instructor) REFERENCES instructores(ci),
     FOREIGN KEY (id_actividad) REFERENCES actividades(id),
     FOREIGN KEY (id_turno) REFERENCES turnos(id)

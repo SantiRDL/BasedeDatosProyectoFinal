@@ -11,6 +11,8 @@ import AdmTurnos from './administrativo/AdmTurnos';
 import Navigation from './Navigation';
 import Inscripciones from './usuario/Inscripciones';
 import MisClases from './usuario/MisClases';
+import Clases from './usuario/clases';
+import Reportes from './Reportes';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
@@ -25,12 +27,11 @@ root.render(
         <Route path="/turnos" element={<AdmTurnos />} />
         <Route path="/inscripciones" element={<Inscripciones />} />
         <Route path="/mis-clases" element={<MisClases />} />
+        <Route path="/clases" element={<Clases />} />
+        <Route path="/reportes" element={<Reportes />} />
       </Routes>
     </Router>
   </React.StrictMode>
 );
 
-// If you want to start measuring performance in your app, pass a function
-// to log results (for example: reportWebVitals(console.log))
-// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
 reportWebVitals();

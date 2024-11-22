@@ -28,6 +28,9 @@ function Navigation() {
           <li>
             <Link to="/clases">Clases Disponibles</Link>
           </li>
+          <li>
+            <Link to="/reportes">Reportes</Link>
+          </li>
         </ul>
       </nav>
     </div>

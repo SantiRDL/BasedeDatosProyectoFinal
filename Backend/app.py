@@ -317,5 +317,55 @@ def get_inscripciones():
     
     return jsonify(inscripciones)
 
+@app.route('/reportes/actividades_ingresos', methods=['GET'])
+def get_actividades_ingresos():
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    cursor.execute("""
+        SELECT a.descripcion, SUM(e.costo) + SUM(c.costo) AS total_ingresos
+        FROM clase c
+        JOIN actividades a ON c.id_actividad = a.id
+        LEFT JOIN equipamiento e ON c.id = e.id_actividad
+        GROUP BY a.descripcion
+        ORDER BY total_ingresos DESC
+    """)
+    report = cursor.fetchall()
+    cursor.close()
+    connection.close()
+    return jsonify(report)
+
+@app.route('/reportes/actividades_alumnos', methods=['GET'])
+def get_actividades_alumnos():
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    cursor.execute("""
+        SELECT a.descripcion, COUNT(ac.ci_alumno) AS total_alumnos
+        FROM clase c
+        JOIN actividades a ON c.id_actividad = a.id
+        JOIN alumno_clase ac ON c.id = ac.id_clase
+        GROUP BY a.descripcion
+        ORDER BY total_alumnos DESC
+    """)
+    report = cursor.fetchall()
+    cursor.close()
+    connection.close()
+    return jsonify(report)
+
+@app.route('/reportes/turnos_clases', methods=['GET'])
+def get_turnos_clases():
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    cursor.execute("""
+        SELECT t.descripcion, COUNT(c.id) AS total_clases
+        FROM clase c
+        JOIN turnos t ON c.id_turno = t.id
+        GROUP BY t.descripcion
+        ORDER BY total_clases DESC
+    """)
+    report = cursor.fetchall()
+    cursor.close()
+    connection.close()
+    return jsonify(report)
+
 if __name__ == '__main__':
     app.run(debug=True)

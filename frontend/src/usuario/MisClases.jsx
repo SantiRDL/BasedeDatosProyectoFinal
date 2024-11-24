@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
-function MisClases() {
+function Misclases() {
   const [inscripciones, setInscripciones] = useState([]);
 
   useEffect(() => {
@@ -18,7 +18,7 @@ function MisClases() {
   };
 
   return (
-    <div className="MisClases">
+    <div className="Misclases">
       <h2>Mis Clases</h2>
       <ul>
         {inscripciones.map((inscripcion, index) => (
@@ -31,4 +31,4 @@ function MisClases() {
   );
 }
 
-export default MisClases;
+export default Misclases;

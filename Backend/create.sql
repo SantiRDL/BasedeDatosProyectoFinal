@@ -46,8 +46,7 @@ CREATE TABLE clase (
     turno ENUM('De 9:00 a 11:00', 'De 12:00 a 14:00', 'De 16:00 a 18:00') NOT NULL,
     tipo_actividad ENUM('grupal', 'individual') NOT NULL,
     FOREIGN KEY (ci_instructor) REFERENCES instructores(ci),
-    FOREIGN KEY (id_actividad) REFERENCES actividades(id),
-    FOREIGN KEY (id_turno) REFERENCES turnos(id)
+    FOREIGN KEY (id_actividad) REFERENCES actividades(id)
 );
 
 CREATE TABLE alumno_clase (
@@ -59,3 +58,5 @@ CREATE TABLE alumno_clase (
     FOREIGN KEY (ci_alumno) REFERENCES alumnos(ci),
     FOREIGN KEY (id_equipamiento) REFERENCES equipamiento(id)
 );
+
+SHOW TABLES;

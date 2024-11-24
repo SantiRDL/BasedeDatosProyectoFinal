@@ -10,7 +10,7 @@ import AdmAlumnos from './administrativo/AdmAlumnos';
 import AdmTurnos from './administrativo/AdmTurnos';
 import Navigation from './Navigation';
 import Inscripciones from './usuario/Inscripciones';
-import MisClases from './usuario/MisClases';
+import MisClases from './usuario/Misclases';
 import Clases from './usuario/clases';
 import Reportes from './Reportes';
 
@@ -26,7 +26,7 @@ root.render(
         <Route path="/alumnos" element={<AdmAlumnos />} />
         <Route path="/turnos" element={<AdmTurnos />} />
         <Route path="/inscripciones" element={<Inscripciones />} />
-        <Route path="/mis-clases" element={<MisClases />} />
+        <Route path="/mis-clases" element={<Misclases />} />
         <Route path="/clases" element={<Clases />} />
         <Route path="/reportes" element={<Reportes />} />
       </Routes>

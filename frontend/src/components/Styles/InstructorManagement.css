@@ -1,0 +1,32 @@
+.management-container {
+    padding: 20px;
+  }
+  
+  .management-container h1 {
+    text-align: center;
+    color: #2c3e50;
+  }
+  
+  form {
+    margin: 20px auto;
+    max-width: 400px;
+  }
+  
+  ul {
+    max-width: 600px;
+    margin: 20px auto;
+  }
+  
+  .delete-button {
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 5px 10px;
+    cursor: pointer;
+  }
+  
+  .delete-button:hover {
+    background-color: #c0392b;
+  }
+  

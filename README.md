@@ -1,4 +1,4 @@
-Linka informe: https://docs.google.com/document/d/1K6nwYGvybKRjx53ykI6GSgC5jRwDzvNAO3IJwZWEXA8/edit?usp=sharing
+Link a informe: https://docs.google.com/document/d/1K6nwYGvybKRjx53ykI6GSgC5jRwDzvNAO3IJwZWEXA8/edit?usp=sharing
 
 Requisitos para levantar proyecto:
 -MySQL workbench o programa que permita hacer consultas con MySQL

@@ -1,8 +1,14 @@
-const BASE_URL = "http://localhost:3000/api";
+const BASE_URL = "http://localhost:5000/api";
 
 // --- Instructores ---
 export const fetchInstructors = async () => {
-  const response = await fetch(`${BASE_URL}/instructors`);
+  const response = await fetch(`${BASE_URL}/instructors`, {
+    method: "GET",
+  });
+  
+  if (!response.ok) {
+    throw new Error("Error al obtener instructores");
+  }
   return await response.json();
 };
 

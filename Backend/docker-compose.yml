@@ -1,0 +1,32 @@
+version: '3.1'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: mysql_container
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: escuela_deportes_nieve
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql  # Script para inicializar la base de datos
+
+  backend:
+    build: .  # Construye el backend desde el Dockerfile en el directorio actual
+    container_name: backend_container
+    depends_on:
+      - mysql  # Asegura que MySQL se inicie antes que el backend
+    environment:
+      DB_HOST: mysql_container       # Nombre del servicio MySQL en Docker
+      DB_USER: root                  # Usuario de MySQL
+      DB_PASSWORD: rootpassword      # Contraseña de MySQL
+      DB_NAME: escuela_deportes_nieve  # Base de datos que se creará
+    ports:
+      - "5000:5000"  # Exposición del puerto del backend
+    networks:
+      - default
+
+networks:
+  default:
+    driver: bridge

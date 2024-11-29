@@ -10,7 +10,9 @@ CREATE TABLE login (
 CREATE TABLE actividades (
     id INT AUTO_INCREMENT PRIMARY KEY,
     descripcion VARCHAR(255) NOT NULL,
-    costo DECIMAL(10, 2) NOT NULL
+    costo DECIMAL(10, 2) NOT NULL,
+    instructor VARCHAR(255),
+    turno VARCHAR(255)
 );
 
 CREATE TABLE equipamiento (

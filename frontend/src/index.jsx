@@ -26,7 +26,7 @@ root.render(
         <Route path="/alumnos" element={<AdmAlumnos />} />
         <Route path="/turnos" element={<AdmTurnos />} />
         <Route path="/inscripciones" element={<Inscripciones />} />
-        <Route path="/mis-clases" element={<Misclases />} />
+        <Route path="/mis-clases" element={<MisClases />} />
         <Route path="/clases" element={<Clases />} />
         <Route path="/reportes" element={<Reportes />} />
       </Routes>

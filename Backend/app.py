@@ -1,373 +1,467 @@
-from flask import Flask, jsonify, request
-from flask_cors import CORS
-import mysql.connector
+import sys
+import MySQLdb
 from config import Config
 
-app = Flask(__name__)
-CORS(app)
-app.config.from_object(Config)
-
 def get_db_connection():
-    connection = mysql.connector.connect(
-        host=app.config['MYSQL_HOST'],
-        user=app.config['MYSQL_USER'],
-        password=app.config['MYSQL_PASSWORD'],
-        database=app.config['MYSQL_DB']
-    )
-    return connection
+    try:
+        connection = MySQLdb.connect(
+            host=Config.MYSQL_HOST,
+            user=Config.MYSQL_USER,
+            passwd=Config.MYSQL_PASSWORD,
+            db=Config.MYSQL_DB
+        )
+        return connection
+    except MySQLdb.Error as e:
+        print(f"Error connecting to MySQL: {e}")
+        sys.exit(1)
 
-# CRUD para la tabla login
-@app.route('/login', methods=['POST'])
-def add_login():
-    data = request.json
-    correo = data['correo']
-    contraseña = data['contraseña']
-    
+# Funciones para ABM de instructores
+def add_instructor(ci, nombre, apellido):
     connection = get_db_connection()
     cursor = connection.cursor()
-    cursor.execute("INSERT INTO login (correo, contraseña) VALUES (%s, %s)", (correo, contraseña))
-    connection.commit()
-    cursor.close()
-    connection.close()
-    
-    return jsonify({"message": "Login added successfully"}), 201
+    try:
+        cursor.execute("INSERT INTO instructores (ci, nombre, apellido) VALUES (%s, %s, %s)", (ci, nombre, apellido))
+        connection.commit()
+    except MySQLdb.Error as e:
+        connection.rollback()
+        print(f"Error adding instructor: {e}")
+    finally:
+        cursor.close()
+        connection.close()
 
-@app.route('/login/<correo>', methods=['GET'])
-def get_login(correo):
+def update_instructor(ci, nombre, apellido):
     connection = get_db_connection()
     cursor = connection.cursor()
-    cursor.execute("SELECT * FROM login WHERE correo = %s", (correo,))
-    login = cursor.fetchone()
-    cursor.close()
-    connection.close()
-    
-    if login:
-        return jsonify({"correo": login[0], "contraseña": login[1]})
-    else:
-        return jsonify({"message": "Login not found"}), 404
+    try:
+        cursor.execute("UPDATE instructores SET nombre = %s, apellido = %s WHERE ci = %s", (nombre, apellido, ci))
+        connection.commit()
+    except MySQLdb.Error as e:
+        connection.rollback()
+        print(f"Error updating instructor: {e}")
+    finally:
+        cursor.close()
+        connection.close()
 
-@app.route('/login/<correo>', methods=['PUT'])
-def update_login(correo):
-    data = request.json
-    contraseña = data['contraseña']
-    
+def delete_instructor(ci):
     connection = get_db_connection()
     cursor = connection.cursor()
-    cursor.execute("UPDATE login SET contraseña = %s WHERE correo = %s", (contraseña, correo))
-    connection.commit()
-    cursor.close()
-    connection.close()
-    
-    return jsonify({"message": "Login updated successfully"})
+    try:
+        cursor.execute("DELETE FROM instructores WHERE ci = %s", (ci,))
+        connection.commit()
+    except MySQLdb.Error as e:
+        connection.rollback()
+        print(f"Error deleting instructor: {e}")
+    finally:
+        cursor.close()
+        connection.close()
 
-@app.route('/login/<correo>', methods=['DELETE'])
-def delete_login(correo):
+# Funciones para ABM de turnos
+def add_turno(descripcion):
     connection = get_db_connection()
     cursor = connection.cursor()
-    cursor.execute("DELETE FROM login WHERE correo = %s", (correo,))
-    connection.commit()
-    cursor.close()
-    connection.close()
-    
-    return jsonify({"message": "Login deleted successfully"})
+    try:
+        cursor.execute("INSERT INTO turnos (descripcion) VALUES (%s)", (descripcion,))
+        connection.commit()
+    except MySQLdb.Error as e:
+        connection.rollback()
+        print(f"Error adding turno: {e}")
+    finally:
+        cursor.close()
+        connection.close()
 
-# CRUD para la tabla actividades
-@app.route('/actividades', methods=['POST'])
-def add_actividad():
-    data = request.json
-    descripcion = data['descripcion']
-    costo = data['costo']
-    instructor = data.get('instructor')
-    turno = data.get('turno')
-    
+def update_turno(id, descripcion):
     connection = get_db_connection()
     cursor = connection.cursor()
-    cursor.execute("INSERT INTO actividades (descripcion, costo, instructor, turno) VALUES (%s, %s, %s, %s)", (descripcion, costo, instructor, turno))
-    connection.commit()
-    cursor.close()
-    connection.close()
-    
-    return jsonify({"message": "Actividad added successfully"}), 201
+    try:
+        cursor.execute("UPDATE turnos SET descripcion = %s WHERE id = %s", (descripcion, id))
+        connection.commit()
+    except MySQLdb.Error as e:
+        connection.rollback()
+        print(f"Error updating turno: {e}")
+    finally:
+        cursor.close()
+        connection.close()
 
-@app.route('/actividades/<id>', methods=['GET'])
-def get_actividad(id):
+def delete_turno(id):
     connection = get_db_connection()
     cursor = connection.cursor()
-    cursor.execute("SELECT * FROM actividades WHERE id = %s", (id,))
-    actividad = cursor.fetchone()
-    cursor.close()
-    connection.close()
-    
-    if actividad:
-        return jsonify({"id": actividad[0], "descripcion": actividad[1], "costo": actividad[2], "instructor": actividad[3], "turno": actividad[4]})
-    else:
-        return jsonify({"message": "Actividad not found"}), 404
+    try:
+        cursor.execute("DELETE FROM turnos WHERE id = %s", (id,))
+        connection.commit()
+    except MySQLdb.Error as e:
+        connection.rollback()
+        print(f"Error deleting turno: {e}")
+    finally:
+        cursor.close()
+        connection.close()
 
-@app.route('/actividades/<id>', methods=['PUT'])
-def update_actividad(id):
-    data = request.json
-    descripcion = data['descripcion']
-    costo = data['costo']
-    instructor = data.get('instructor')
-    turno = data.get('turno')
-    
+# Funciones para modificación de actividades
+def update_actividad(id, descripcion, costo, instructor, turno):
     connection = get_db_connection()
     cursor = connection.cursor()
-    cursor.execute("UPDATE actividades SET descripcion = %s, costo = %s, instructor = %s, turno = %s WHERE id = %s", (descripcion, costo, instructor, turno, id))
-    connection.commit()
-    cursor.close()
-    connection.close()
-    
-    return jsonify({"message": "Actividad updated successfully"})
+    try:
+        cursor.execute("UPDATE actividades SET descripcion = %s, costo = %s, instructor = %s, turno = %s WHERE id = %s", (descripcion, costo, instructor, turno, id))
+        connection.commit()
+    except MySQLdb.Error as e:
+        connection.rollback()
+        print(f"Error updating actividad: {e}")
+    finally:
+        cursor.close()
+        connection.close()
 
-@app.route('/actividades/<id>', methods=['DELETE'])
-def delete_actividad(id):
+# Funciones para ABM de alumnos
+def add_alumno(ci, nombre, apellido, fecha_nacimiento, telefono, correo):
     connection = get_db_connection()
     cursor = connection.cursor()
-    cursor.execute("DELETE FROM actividades WHERE id = %s", (id,))
-    connection.commit()
-    cursor.close()
-    connection.close()
-    
-    return jsonify({"message": "Actividad deleted successfully"})
+    try:
+        cursor.execute("INSERT INTO alumnos (ci, nombre, apellido, fecha_nacimiento, telefono, correo) VALUES (%s, %s, %s, %s, %s, %s)", (ci, nombre, apellido, fecha_nacimiento, telefono, correo))
+        connection.commit()
+    except MySQLdb.Error as e:
+        connection.rollback()
+        print(f"Error adding alumno: {e}")
+    finally:
+        cursor.close()
+        connection.close()
 
-# CRUD para la tabla equipamiento
-@app.route('/equipamiento', methods=['POST'])
-def add_equipamiento():
-    data = request.json
-    id_actividad = data['id_actividad']
-    descripcion = data['descripcion']
-    costo = data['costo']
-    
+def update_alumno(ci, nombre, apellido, fecha_nacimiento, telefono, correo):
     connection = get_db_connection()
     cursor = connection.cursor()
-    cursor.execute("INSERT INTO equipamiento (id_actividad, descripcion, costo) VALUES (%s, %s, %s)", (id_actividad, descripcion, costo))
-    connection.commit()
-    cursor.close()
-    connection.close()
-    
-    return jsonify({"message": "Equipamiento added successfully"}), 201
+    try:
+        cursor.execute("UPDATE alumnos SET nombre = %s, apellido = %s, fecha_nacimiento = %s, telefono = %s, correo = %s WHERE ci = %s", (nombre, apellido, fecha_nacimiento, telefono, correo, ci))
+        connection.commit()
+    except MySQLdb.Error as e:
+        connection.rollback()
+        print(f"Error updating alumno: {e}")
+    finally:
+        cursor.close()
+        connection.close()
 
-@app.route('/equipamiento/<id>', methods=['GET'])
-def get_equipamiento(id):
+def delete_alumno(ci):
     connection = get_db_connection()
     cursor = connection.cursor()
-    cursor.execute("SELECT * FROM equipamiento WHERE id = %s", (id,))
-    equipamiento = cursor.fetchone()
-    cursor.close()
-    connection.close()
-    
-    if equipamiento:
-        return jsonify({"id": equipamiento[0], "id_actividad": equipamiento[1], "descripcion": equipamiento[2], "costo": equipamiento[3]})
-    else:
-        return jsonify({"message": "Equipamiento not found"}), 404
+    try:
+        cursor.execute("DELETE FROM alumnos WHERE ci = %s", (ci,))
+        connection.commit()
+    except MySQLdb.Error as e:
+        connection.rollback()
+        print(f"Error deleting alumno: {e}")
+    finally:
+        cursor.close()
+        connection.close()
 
-@app.route('/equipamiento/<id>', methods=['PUT'])
-def update_equipamiento(id):
-    data = request.json
-    id_actividad = data['id_actividad']
-    descripcion = data['descripcion']
-    costo = data['costo']
-    
+# Funciones para manejar las clases
+def add_clase(ci_instructor, id_actividad, id_turno, dictada, turno, tipo_actividad):
     connection = get_db_connection()
     cursor = connection.cursor()
-    cursor.execute("UPDATE equipamiento SET id_actividad = %s, descripcion = %s, costo = %s WHERE id = %s", (id_actividad, descripcion, costo, id))
-    connection.commit()
-    cursor.close()
-    connection.close()
-    
-    return jsonify({"message": "Equipamiento updated successfully"})
+    try:
+        # Verificar que el instructor no tenga otra clase en el mismo turno
+        cursor.execute("SELECT COUNT(*) FROM clase WHERE ci_instructor = %s AND turno = %s", (ci_instructor, turno))
+        if cursor.fetchone()[0] > 0:
+            print("El instructor ya tiene una clase en este turno.")
+            return
 
-@app.route('/equipamiento/<id>', methods=['DELETE'])
-def delete_equipamiento(id):
+        cursor.execute("INSERT INTO clase (ci_instructor, id_actividad, id_turno, dictada, turno, tipo_actividad) VALUES (%s, %s, %s, %s, %s, %s)", (ci_instructor, id_actividad, id_turno, dictada, turno, tipo_actividad))
+        connection.commit()
+    except MySQLdb.Error as e:
+        connection.rollback()
+        print(f"Error adding clase: {e}")
+    finally:
+        cursor.close()
+        connection.close()
+
+def update_clase(id, ci_instructor, id_turno):
     connection = get_db_connection()
     cursor = connection.cursor()
-    cursor.execute("DELETE FROM equipamiento WHERE id = %s", (id,))
-    connection.commit()
-    cursor.close()
-    connection.close()
-    
-    return jsonify({"message": "Equipamiento deleted successfully"})
+    try:
+        # Verificar que el instructor no tenga otra clase en el mismo turno
+        cursor.execute("SELECT COUNT(*) FROM clase WHERE ci_instructor = %s AND id_turno = %s AND id != %s", (ci_instructor, id_turno, id))
+        if cursor.fetchone()[0] > 0:
+            print("El instructor ya tiene una clase en este turno.")
+            return
 
-# CRUD para la tabla alumnos
-@app.route('/alumnos', methods=['POST'])
-def add_alumno():
-    data = request.json
-    nombre = data['nombre']
-    ci = data['ci']
-    
+        cursor.execute("UPDATE clase SET ci_instructor = %s, id_turno = %s WHERE id = %s", (ci_instructor, id_turno, id))
+        connection.commit()
+    except MySQLdb.Error as e:
+        connection.rollback()
+        print(f"Error updating clase: {e}")
+    finally:
+        cursor.close()
+        connection.close()
+
+def add_alumno_to_clase(id_clase, ci_alumno):
     connection = get_db_connection()
     cursor = connection.cursor()
-    cursor.execute("INSERT INTO alumnos (nombre, ci) VALUES (%s, %s)", (nombre, ci))
-    connection.commit()
-    cursor.close()
-    connection.close()
-    
-    return jsonify({"message": "Alumno added successfully"}), 201
+    try:
+        # Verificar que el alumno no esté inscrito en otra clase en el mismo turno
+        cursor.execute("SELECT turno FROM clase WHERE id = %s", (id_clase,))
+        turno = cursor.fetchone()[0]
+        cursor.execute("SELECT COUNT(*) FROM clase c JOIN alumno_clase ac ON c.id = ac.id_clase WHERE ac.ci_alumno = %s AND c.turno = %s", (ci_alumno, turno))
+        if cursor.fetchone()[0] > 0:
+            print("El alumno ya está inscrito en otra clase en este turno.")
+            return
 
-@app.route('/alumnos/<id>', methods=['GET'])
-def get_alumno(id):
+        cursor.execute("INSERT INTO alumno_clase (id_clase, ci_alumno) VALUES (%s, %s)", (id_clase, ci_alumno))
+        connection.commit()
+    except MySQLdb.Error as e:
+        connection.rollback()
+        print(f"Error adding alumno to clase: {e}")
+    finally:
+        cursor.close()
+        connection.close()
+
+def remove_alumno_from_clase(id_clase, ci_alumno):
     connection = get_db_connection()
     cursor = connection.cursor()
-    cursor.execute("SELECT * FROM alumnos WHERE id = %s", (id,))
-    alumno = cursor.fetchone()
-    cursor.close()
-    connection.close()
-    
-    if alumno:
-        return jsonify({"id": alumno[0], "nombre": alumno[1], "ci": alumno[2]})
-    else:
-        return jsonify({"message": "Alumno not found"}), 404
+    try:
+        cursor.execute("DELETE FROM alumno_clase WHERE id_clase = %s AND ci_alumno = %s", (id_clase, ci_alumno))
+        connection.commit()
+    except MySQLdb.Error as e:
+        connection.rollback()
+        print(f"Error removing alumno from clase: {e}")
+    finally:
+        cursor.close()
+        connection.close()
 
-@app.route('/alumnos/<id>', methods=['PUT'])
-def update_alumno(id):
-    data = request.json
-    nombre = data['nombre']
-    ci = data['ci']
-    
-    connection = get_db_connection()
-    cursor = connection.cursor()
-    cursor.execute("UPDATE alumnos SET nombre = %s, ci = %s WHERE id = %s", (nombre, ci, id))
-    connection.commit()
-    cursor.close()
-    connection.close()
-    
-    return jsonify({"message": "Alumno updated successfully"})
-
-@app.route('/alumnos/<id>', methods=['DELETE'])
-def delete_alumno(id):
-    connection = get_db_connection()
-    cursor = connection.cursor()
-    cursor.execute("DELETE FROM alumnos WHERE id = %s", (id,))
-    connection.commit()
-    cursor.close()
-    connection.close()
-    
-    return jsonify({"message": "Alumno deleted successfully"})
-
-# CRUD para la tabla clases_grupales
-@app.route('/clases_grupales', methods=['POST'])
-def add_clase_grupal():
-    data = request.json
-    id_actividad = data['id_actividad']
-    id_alumno = data['id_alumno']
-    
-    connection = get_db_connection()
-    cursor = connection.cursor()
-    cursor.execute("INSERT INTO clases_grupales (id_actividad, id_alumno) VALUES (%s, %s)", (id_actividad, id_alumno))
-    connection.commit()
-    cursor.close()
-    connection.close()
-    
-    return jsonify({"message": "Clase grupal added successfully"}), 201
-
-@app.route('/clases_grupales/<id_actividad>/<id_alumno>', methods=['GET'])
-def get_clase_grupal(id_actividad, id_alumno):
-    connection = get_db_connection()
-    cursor = connection.cursor()
-    cursor.execute("SELECT * FROM clases_grupales WHERE id_actividad = %s AND id_alumno = %s", (id_actividad, id_alumno))
-    clase_grupal = cursor.fetchone()
-    cursor.close()
-    connection.close()
-    
-    if clase_grupal:
-        return jsonify({"id_actividad": clase_grupal[0], "id_alumno": clase_grupal[1]})
-    else:
-        return jsonify({"message": "Clase grupal not found"}), 404
-
-@app.route('/clases_grupales/<id_actividad>/<id_alumno>', methods=['DELETE'])
-def delete_clase_grupal(id_actividad, id_alumno):
-    connection = get_db_connection()
-    cursor = connection.cursor()
-    cursor.execute("DELETE FROM clases_grupales WHERE id_actividad = %s AND id_alumno = %s", (id_actividad, id_alumno))
-    connection.commit()
-    cursor.close()
-    connection.close()
-    
-    return jsonify({"message": "Clase grupal deleted successfully"})
-
-@app.route('/inscripciones', methods=['POST'])
-def add_inscripcion():
-    data = request.json
-    id_clase = data['id_clase']
-    ci_alumno = data['ci_alumno']
-    id_equipamiento = data['id_equipamiento']
-    
-    connection = get_db_connection()
-    cursor = connection.cursor()
-    cursor.execute("INSERT INTO alumno_clase (id_clase, ci_alumno, id_equipamiento) VALUES (%s, %s, %s)", (id_clase, ci_alumno, id_equipamiento))
-    connection.commit()
-    cursor.close()
-    connection.close()
-    
-    return jsonify({"message": "Inscripción added successfully"}), 201
-
-@app.route('/inscripciones', methods=['GET'])
-def get_inscripciones():
-    connection = get_db_connection()
-    cursor = connection.cursor()
-    cursor.execute("""
-        SELECT ac.id_clase, a.nombre AS nombre_alumno, a.apellido AS apellido_alumno, c.descripcion AS descripcion_clase, e.descripcion AS descripcion_equipamiento
-        FROM alumno_clase ac
-        JOIN alumnos a ON ac.ci_alumno = a.ci
-        JOIN clase c ON ac.id_clase = c.id
-        JOIN equipamiento e ON ac.id_equipamiento = e.id
-    """)
-    inscripciones = cursor.fetchall()
-    cursor.close()
-    connection.close()
-    
-    return jsonify(inscripciones)
-
-@app.route('/reportes/actividades_ingresos', methods=['GET'])
+# Funciones para los reportes
 def get_actividades_ingresos():
     connection = get_db_connection()
     cursor = connection.cursor()
-    cursor.execute("""
-        SELECT a.descripcion, SUM(e.costo) + SUM(c.costo) AS total_ingresos
-        FROM clase c
-        JOIN actividades a ON c.id_actividad = a.id
-        LEFT JOIN equipamiento e ON c.id = e.id_actividad
-        GROUP BY a.descripcion
-        ORDER BY total_ingresos DESC
-    """)
-    report = cursor.fetchall()
-    cursor.close()
-    connection.close()
-    return jsonify(report)
+    try:
+        cursor.execute("""
+            SELECT a.descripcion, SUM(e.costo) + SUM(c.costo) AS total_ingresos
+            FROM clase c
+            JOIN actividades a ON c.id_actividad = a.id
+            LEFT JOIN equipamiento e ON c.id = e.id_actividad
+            GROUP BY a.descripcion
+            ORDER BY total_ingresos DESC
+        """)
+        report = cursor.fetchall()
+        return report
+    except MySQLdb.Error as e:
+        print(f"Error fetching actividades ingresos: {e}")
+    finally:
+        cursor.close()
+        connection.close()
 
-@app.route('/reportes/actividades_alumnos', methods=['GET'])
 def get_actividades_alumnos():
     connection = get_db_connection()
     cursor = connection.cursor()
-    cursor.execute("""
-        SELECT a.descripcion, COUNT(ac.ci_alumno) AS total_alumnos
-        FROM clase c
-        JOIN actividades a ON c.id_actividad = a.id
-        JOIN alumno_clase ac ON c.id = ac.id_clase
-        GROUP BY a.descripcion
-        ORDER BY total_alumnos DESC
-    """)
-    report = cursor.fetchall()
-    cursor.close()
-    connection.close()
-    return jsonify(report)
+    try:
+        cursor.execute("""
+            SELECT a.descripcion, COUNT(ac.ci_alumno) AS total_alumnos
+            FROM clase c
+            JOIN actividades a ON c.id_actividad = a.id
+            JOIN alumno_clase ac ON c.id = ac.id_clase
+            GROUP BY a.descripcion
+            ORDER BY total_alumnos DESC
+        """)
+        report = cursor.fetchall()
+        return report
+    except MySQLdb.Error as e:
+        print(f"Error fetching actividades alumnos: {e}")
+    finally:
+        cursor.close()
+        connection.close()
 
-@app.route('/reportes/turnos_clases', methods=['GET'])
 def get_turnos_clases():
     connection = get_db_connection()
     cursor = connection.cursor()
-    cursor.execute("""
-        SELECT t.descripcion, COUNT(c.id) AS total_clases
-        FROM clase c
-        JOIN turnos t ON c.id_turno = t.id
-        GROUP BY t.descripcion
-        ORDER BY total_clases DESC
-    """)
-    report = cursor.fetchall()
-    cursor.close()
-    connection.close()
-    return jsonify(report)
+    try:
+        cursor.execute("""
+            SELECT t.descripcion, COUNT(c.id) AS total_clases
+            FROM clase c
+            JOIN turnos t ON c.id_turno = t.id
+            GROUP BY t.descripcion
+            ORDER BY total_clases DESC
+        """)
+        report = cursor.fetchall()
+        return report
+    except MySQLdb.Error as e:
+        print(f"Error fetching turnos clases: {e}")
+    finally:
+        cursor.close()
+        connection.close()
 
-if __name__ == '__main__':
-    app.run(debug=True)
+# Funciones para imprimir los resultados
+def print_report(report):
+    for row in report:
+        print(row)
+
+def print_menu():
+    print("\nMenu:")
+    print("1. ABM de Instructores")
+    print("2. ABM de Turnos")
+    print("3. Modificación de Actividades")
+    print("4. ABM de Alumnos")
+    print("5. Manejo de Clases")
+    print("6. Reportes")
+    print("7. Salir")
+
+def print_submenu(title, options):
+    print(f"\n{title}:")
+    for i, option in enumerate(options, 1):
+        print(f"{i}. {option}")
+    print(f"{len(options) + 1}. Volver al menú principal")
+
+def main():
+    while True:
+        print_menu()
+        choice = input("Seleccione una opción: ")
+        if choice == '1':
+            abm_instructores()
+        elif choice == '2':
+            abm_turnos()
+        elif choice == '3':
+            modificacion_actividades()
+        elif choice == '4':
+            abm_alumnos()
+        elif choice == '5':
+            manejo_clases()
+        elif choice == '6':
+            reportes()
+        elif choice == '7':
+            break
+        else:
+            print("Opción no válida. Intente de nuevo.")
+
+def abm_instructores():
+    options = ["Agregar Instructor", "Modificar Instructor", "Eliminar Instructor"]
+    while True:
+        print_submenu("ABM de Instructores", options)
+        choice = input("Seleccione una opción: ")
+        if choice == '1':
+            ci = input("CI: ")
+            nombre = input("Nombre: ")
+            apellido = input("Apellido: ")
+            add_instructor(ci, nombre, apellido)
+        elif choice == '2':
+            ci = input("CI: ")
+            nombre = input("Nombre: ")
+            apellido = input("Apellido: ")
+            update_instructor(ci, nombre, apellido)
+        elif choice == '3':
+            ci = input("CI: ")
+            delete_instructor(ci)
+        elif choice == '4':
+            break
+        else:
+            print("Opción no válida. Intente de nuevo.")
+
+def abm_turnos():
+    options = ["Agregar Turno", "Modificar Turno", "Eliminar Turno"]
+    while True:
+        print_submenu("ABM de Turnos", options)
+        choice = input("Seleccione una opción: ")
+        if choice == '1':
+            descripcion = input("Descripción: ")
+            add_turno(descripcion)
+        elif choice == '2':
+            id = input("ID: ")
+            descripcion = input("Descripción: ")
+            update_turno(id, descripcion)
+        elif choice == '3':
+            id = input("ID: ")
+            delete_turno(id)
+        elif choice == '4':
+            break
+        else:
+            print("Opción no válida. Intente de nuevo.")
+
+def modificacion_actividades():
+    options = ["Modificar Actividad"]
+    while True:
+        print_submenu("Modificación de Actividades", options)
+        choice = input("Seleccione una opción: ")
+        if choice == '1':
+            id = input("ID: ")
+            descripcion = input("Descripción: ")
+            costo = input("Costo: ")
+            instructor = input("Instructor: ")
+            turno = input("Turno: ")
+            update_actividad(id, descripcion, costo, instructor, turno)
+        elif choice == '2':
+            break
+        else:
+            print("Opción no válida. Intente de nuevo.")
+
+def abm_alumnos():
+    options = ["Agregar Alumno", "Modificar Alumno", "Eliminar Alumno"]
+    while True:
+        print_submenu("ABM de Alumnos", options)
+        choice = input("Seleccione una opción: ")
+        if choice == '1':
+            ci = input("CI: ")
+            nombre = input("Nombre: ")
+            apellido = input("Apellido: ")
+            fecha_nacimiento = input("Fecha de Nacimiento (YYYY-MM-DD): ")
+            telefono = input("Teléfono: ")
+            correo = input("Correo: ")
+            add_alumno(ci, nombre, apellido, fecha_nacimiento, telefono, correo)
+        elif choice == '2':
+            ci = input("CI: ")
+            nombre = input("Nombre: ")
+            apellido = input("Apellido: ")
+            fecha_nacimiento = input("Fecha de Nacimiento (YYYY-MM-DD): ")
+            telefono = input("Teléfono: ")
+            correo = input("Correo: ")
+            update_alumno(ci, nombre, apellido, fecha_nacimiento, telefono, correo)
+        elif choice == '3':
+            ci = input("CI: ")
+            delete_alumno(ci)
+        elif choice == '4':
+            break
+        else:
+            print("Opción no válida. Intente de nuevo.")
+
+def manejo_clases():
+    options = ["Agregar Clase", "Modificar Clase", "Agregar Alumno a Clase", "Quitar Alumno de Clase"]
+    while True:
+        print_submenu("Manejo de Clases", options)
+        choice = input("Seleccione una opción: ")
+        if choice == '1':
+            ci_instructor = input("CI del Instructor: ")
+            id_actividad = input("ID de la Actividad: ")
+            id_turno = input("ID del Turno: ")
+            dictada = input("Dictada (1 para Sí, 0 para No): ")
+            turno = input("Turno: ")
+            tipo_actividad = input("Tipo de Actividad (grupal/individual): ")
+            add_clase(ci_instructor, id_actividad, id_turno, dictada, turno, tipo_actividad)
+        elif choice == '2':
+            id = input("ID de la Clase: ")
+            ci_instructor = input("CI del Instructor: ")
+            id_turno = input("ID del Turno: ")
+            update_clase(id, ci_instructor, id_turno)
+        elif choice == '3':
+            id_clase = input("ID de la Clase: ")
+            ci_alumno = input("CI del Alumno: ")
+            add_alumno_to_clase(id_clase, ci_alumno)
+        elif choice == '4':
+            id_clase = input("ID de la Clase: ")
+            ci_alumno = input("CI del Alumno: ")
+            remove_alumno_from_clase(id_clase, ci_alumno)
+        elif choice == '5':
+            break
+        else:
+            print("Opción no válida. Intente de nuevo.")
+
+def reportes():
+    options = ["Actividades que más ingresos generan", "Actividades con más alumnos", "Turnos con más clases dictadas"]
+    while True:
+        print_submenu("Reportes", options)
+        choice = input("Seleccione una opción: ")
+        if choice == '1':
+            report = get_actividades_ingresos()
+            print_report(report)
+        elif choice == '2':
+            report = get_actividades_alumnos()
+            print_report(report)
+        elif choice == '3':
+            report = get_turnos_clases()
+            print_report(report)
+        elif choice == '4':
+            break
+        else:
+            print("Opción no válida. Intente de nuevo.")
+
+if __name__ == "__main__":
+    main()
